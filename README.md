@@ -1,4 +1,4 @@
-# sea
+# seatSelected
 
 > A Vue.js project
 
