@@ -1,7 +1,9 @@
 <template>
   <div id="app">
     <img src="./res/stage525.png" style="display:block;" width="100%" alt="">
-    <div id="stage"></div>
+    <div id="stage">
+      <div id="snapshot"></div>
+    </div>
   </div>
 </template>
 
@@ -40,5 +42,12 @@ export default {
   width:100%;  
   padding: 0 15px;
   overflow:auto;
+}
+#snapshot{
+  width: 150px;
+  height: 150px;
+  position:absolute;
+  background: #666;
+  z-index: 9999;
 }
 </style>

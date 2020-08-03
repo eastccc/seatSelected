@@ -13,7 +13,7 @@ export default function init(){
   const debug = document.querySelector('#debug')
 
 
-  //layer宽高
+  //layer宽高 计算最大宽高 + 单个宽高 + 间距
   let width = maxX + 40 + 60
   let height = maxY + 40 + 40
   
@@ -48,10 +48,9 @@ export default function init(){
   if(targetH < height){
     rateh = targetH / height
   }
-  console.log(layer.attr('scale'), 'scale')
   // let minScale = Math.min(ratew, rateh)
   // console.log(ratew, rateh, minScale)
-  // layer.attr('transformOrigin', [targetW/2, targetH/2])
+  layer.attr('transformOrigin', [width/2, height/2])
   // layer.attr('translate', [ -width ,0])
   // layer.attr('scale', minScale)
   // layer.attr({
@@ -60,46 +59,90 @@ export default function init(){
   //   scale : minScale
   // })
 
+
+
+
+  function createSnapshot(){
+    const canvas = scene.snapshot({offscreen: true});
+    const snapshot = new Image();
+    snapshot.style.width = '100%'
+    snapshot.src = canvas.toDataURL();
+    const domsnap = document.querySelector('#snapshot')
+    domsnap.innerHTML = ''
+    domsnap.appendChild(snapshot);
+  }
+
+
+
+
+
+
+
+
+  createSnapshot()
+
+  //事件处理
   //添加事件
   var mc = new Hammer.Manager(container);
   mc.add(new Hammer.Pan({ threshold: 0, pointers: 0 }));  
   mc.add(new Hammer.Pinch({ threshold: 0 })).recognizeWith(mc.get('pan'));
 
-  let startX = 0, startY = 0
+  let startX = 0, startY = 0, oldX = 0, oldY = 0, oldScale = 1, endScale = 1
 
-  mc.on('pinch', function(e) {
-    if(e.scale > 1){
-      
-      layer.attr('scale', [e.scale, e.scale])
-      layer.attr('translate', [startX + e.deltaX, startY + e.deltaY])
+  
+
+  
+  mc.on("hammer.input", function(e) {
+    startX = e.deltaX
+    startY = e.deltaY
+    
+    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
+ });
+ mc.on("panstart", function(e){
+  oldX = layer.attr('translate')[0]
+  oldY = layer.attr('translate')[1]
+  debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
+});
+  mc.on("panmove", function(e){
+    // console.log(startX, startX + e.deltaX + oldX, startY + e.deltaY + oldY, 'move')
+    layer.attr('translate', [startX + e.deltaX + oldX, startY + e.deltaY + oldY])
+    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
+  });
+  mc.on("panend", function(e){
+    // console.log(startX + e.deltaX, startY + e.deltaY, 'end')
+    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
+  });
+
+  mc.on("pinchstart", function(e){
+    // oldScale = e.scale
+    debug.innerText = 'pinchstart' + JSON.stringify(e)
+  });
+
+  mc.on('pinchin', function(e) {
+    
+    if(oldScale*e.scale > 1){
+      console.log(oldScale*e.scale, 'pinchin')
+      layer.attr('translate', [startX + e.deltaX + oldX, startY + e.deltaY + oldY])
+      layer.attr('scale', [oldScale*e.scale, oldScale*e.scale])
+      endScale = oldScale*e.scale
       console.log(startX + e.deltaX, startY + e.deltaY)
       debug.innerText = JSON.stringify(layer)
     }
   });
-
-  
-  mc.on("hammer.input", function(e) {
-    startX = e.deltaX;
-    startY = e.deltaY;
-    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
- });
- mc.on("panstart", function(e){
-  startX += layer.attr('translate')[0];
-  startY += layer.attr('translate')[1];
-  debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
-});
-  mc.on("panmove", function(e){
-    layer.attr('translate', [startX + e.deltaX, startY + e.deltaY])
-    console.log(startX + e.deltaX, startY + e.deltaY, 'move')
-    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
+  mc.on('pinchout', function(e) {
+    if(e.scale > oldScale){
+      console.log(e.scale, 'pinchout')
+      layer.attr('translate', [startX + e.deltaX + oldX, startY + e.deltaY + oldY])
+      layer.attr('scale', [e.scale, e.scale])
+      endScale = e.scale
+      console.log(startX + e.deltaX, startY + e.deltaY)
+      debug.innerText = JSON.stringify(layer)
+    }
   });
-  mc.on("panend", function(e){
-    console.log(startX + e.deltaX, startY + e.deltaY, 'end')
-
-    debug.innerText = 'panmove' + JSON.stringify(e.deltaX)
-  });
-  mc.on("pinchstart pinchmove", function(e){
-    debug.innerText = 'pinchstart' + JSON.stringify(e)
+  mc.on("pinchend", function(e){
+    // console.log(e.scale)
+    oldScale = endScale
+    console.log(endScale, 'endScale')
   });
   
 }
